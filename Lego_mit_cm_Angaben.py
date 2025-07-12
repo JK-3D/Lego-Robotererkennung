@@ -29,7 +29,7 @@ bf = cv2.BFMatcher()
 window = tk.Tk()
 window.title("Live-Tracking mit SIFT & Zentimeter-Ausgabe")
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 # Setze Kamera-Auflösung für bekannte Umrechnung (z.B. 1280x720)
 FRAME_WIDTH_PX = 1280
