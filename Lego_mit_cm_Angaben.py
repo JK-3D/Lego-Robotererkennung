@@ -4,16 +4,19 @@ from PIL import Image, ImageTk
 import datetime
 import numpy as np
 import math
-
-# initialisiere Variablen
-position_list = []
-x_cm = 0
-y_cm = 0
-angel_deg = 0
+import csv
+import os
 
 # Kamera-Sichtfeld in Zentimetern
 CAMERA_WIDTH_CM = 237.1
 CAMERA_HEIGHT_CM = 115.2
+
+# CSV-Datei vorbereiten
+csv_filename = datetime.datetime.now().strftime("Live_Positionen\Live_Position_%Y-%m-%d_%H-%M-%S.csv")
+if not os.path.exists(csv_filename):
+    with open(csv_filename, mode='w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["timestamp", "x_cm", "y_cm", "rotation_deg"])
 
 # --- Vorlage laden ---
 template_path = "vergleichsbild.jpg"
@@ -27,11 +30,11 @@ bf = cv2.BFMatcher()
 
 # --- GUI Setup ---
 window = tk.Tk()
-window.title("Live-Tracking mit SIFT & Zentimeter-Ausgabe")
+window.title("Live-Tracking mit Zentimeter & CSV-Logging")
 
 cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
-# Setze Kamera-Auflösung für bekannte Umrechnung (z.B. 1280x720)
+# Setze Kamera-Auflösung für bekannte Umrechnung (z. B. 1280x720)
 FRAME_WIDTH_PX = 1280
 FRAME_HEIGHT_PX = 720
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH_PX)
@@ -57,7 +60,7 @@ def capture_image():
         cv2.imwrite(filename, frame)
         print(f"Foto gespeichert als {filename}")
 
-# tk.Button(window, text="Foto machen", command=capture_image).pack()
+tk.Button(window, text="Foto machen", command=capture_image).pack()
 
 def quit_program():
     cap.release()
@@ -65,11 +68,6 @@ def quit_program():
 
 tk.Button(window, text="Beenden", command=quit_program).pack()
 
-def robotfollowing():
-    position_list.append([x_cm, y_cm, angel_deg])
-    robotfollowing()
-
-tk.Button(window, text="Starte Roboterverfolgung", command=robotfollowing).pack()
 
 # ----- Frame aktualisieren -----
 def update_frame():
@@ -77,7 +75,7 @@ def update_frame():
     if not ret:
         return
 
-    frame = frame[0:FRAME_HEIGHT_PX, 0:FRAME_WIDTH_PX]  # Zuschneiden falls nötig
+    frame = frame[0:FRAME_HEIGHT_PX, 0:FRAME_WIDTH_PX]
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     kp_frame, des_frame = sift.detectAndCompute(gray, None)
@@ -102,18 +100,16 @@ def update_frame():
                 pts = np.float32([[0, 0], [0, h], [w, h], [w, 0]]).reshape(-1, 1, 2)
                 dst = cv2.perspectiveTransform(pts, M)
 
-                # Zeichnen
                 frame = cv2.polylines(frame, [np.int32(dst)], True, (0, 255, 0), 3)
 
-                # Linke untere Ecke: Punkt [1] im Uhrzeigersinn: [0]=oben links, [1]=unten links, ...
+                # Linke untere Ecke
                 bottom_left = dst[1][0]
                 x_px, y_px = bottom_left
 
-                # Umrechnung in Zentimeter
                 x_cm = x_px * cm_per_px_x
                 y_cm = y_px * cm_per_px_y
 
-                # Rotation berechnen: Vektor von [1] (unten links) zu [2] (unten rechts)
+                # Rotation
                 pt1 = dst[1][0]
                 pt2 = dst[2][0]
                 dx = pt2[0] - pt1[0]
@@ -124,7 +120,13 @@ def update_frame():
                 # Ausgabe
                 position_output = f"Position: ({x_cm:.1f} cm, {y_cm:.1f} cm), Drehung: {angle_deg:.1f}°"
 
-    # Tkinter Bild
+                # Log in CSV-Datei
+                timestamp = datetime.datetime.now().isoformat()
+                with open(csv_filename, mode='a', newline='') as f:
+                    writer = csv.writer(f)
+                    writer.writerow([timestamp, f"{x_cm:.2f}", f"{y_cm:.2f}", f"{angle_deg:.2f}"])
+
+    # Tkinter Bild anzeigen
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = Image.fromarray(rgb)
     imgtk = ImageTk.PhotoImage(image=img)
@@ -140,4 +142,3 @@ window.mainloop()
 
 cap.release()
 cv2.destroyAllWindows()
-print(position_list)
