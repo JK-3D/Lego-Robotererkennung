@@ -5,6 +5,12 @@ import datetime
 import numpy as np
 import math
 
+# initialisiere Variablen
+position_list = []
+x_cm = 0
+y_cm = 0
+angel_deg = 0
+
 # Kamera-Sichtfeld in Zentimetern
 CAMERA_WIDTH_CM = 237.1
 CAMERA_HEIGHT_CM = 115.2
@@ -51,13 +57,19 @@ def capture_image():
         cv2.imwrite(filename, frame)
         print(f"Foto gespeichert als {filename}")
 
-tk.Button(window, text="Foto machen", command=capture_image).pack()
+# tk.Button(window, text="Foto machen", command=capture_image).pack()
 
 def quit_program():
     cap.release()
     window.destroy()
 
 tk.Button(window, text="Beenden", command=quit_program).pack()
+
+def robotfollowing():
+    position_list.append([x_cm, y_cm, angel_deg])
+    robotfollowing()
+
+tk.Button(window, text="Starte Roboterverfolgung", command=robotfollowing).pack()
 
 # ----- Frame aktualisieren -----
 def update_frame():
@@ -128,3 +140,4 @@ window.mainloop()
 
 cap.release()
 cv2.destroyAllWindows()
+print(position_list)
