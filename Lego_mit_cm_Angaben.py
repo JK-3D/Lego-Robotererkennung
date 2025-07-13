@@ -7,16 +7,14 @@ import math
 import csv
 import os
 
+# Variablen
+
+exportcsv = 0
+csv_filename = ""
+
 # Kamera-Sichtfeld in Zentimetern
 CAMERA_WIDTH_CM = 237.1
 CAMERA_HEIGHT_CM = 115.2
-
-# CSV-Datei vorbereiten
-csv_filename = datetime.datetime.now().strftime("Live_Positionen\Live_Position_%Y-%m-%d_%H-%M-%S.csv")
-if not os.path.exists(csv_filename):
-    with open(csv_filename, mode='w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(["timestamp", "x_cm", "y_cm", "rotation_deg"])
 
 # --- Vorlage laden ---
 template_path = "vergleichsbild.jpg"
@@ -52,6 +50,24 @@ label.pack()
 position_label = tk.Label(window, text="")
 position_label.pack()
 
+# ----- CSV exportieren ----
+
+def csv_exportieren():
+    global exportcsv
+    global csv_filename
+    if exportcsv == 0:
+        # CSV-Datei vorbereiten
+        csv_filename = datetime.datetime.now().strftime("Live_Positionen\Live_Position_%Y-%m-%d_%H-%M-%S.csv")
+        if not os.path.exists(csv_filename):
+            with open(csv_filename, mode='w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(["timestamp", "x_cm", "y_cm", "rotation_deg"])
+        exportcsv = 1
+    else:
+        exportcsv = 0
+
+tk.Button(window, text="CSV Starten/Abbrechen", command=csv_exportieren).pack()
+
 # ----- Foto aufnehmen -----
 def capture_image():
     ret, frame = cap.read()
@@ -71,6 +87,8 @@ tk.Button(window, text="Beenden", command=quit_program).pack()
 
 # ----- Frame aktualisieren -----
 def update_frame():
+    global exportcsv
+
     ret, frame = cap.read()
     if not ret:
         return
@@ -163,10 +181,11 @@ def update_frame():
                 position_output = f"Position: ({x_cm:.1f} cm, {y_cm:.1f} cm), Drehung: {angle_deg:.1f}°"
 
                 # Log in CSV-Datei
-                timestamp = datetime.datetime.now().isoformat()
-                with open(csv_filename, mode='a', newline='') as f:
-                    writer = csv.writer(f)
-                    writer.writerow([timestamp, f"{x_cm:.2f}", f"{y_cm:.2f}", f"{angle_deg:.2f}"])
+                if exportcsv == 1:
+                    timestamp = datetime.datetime.now().isoformat()
+                    with open(csv_filename, mode='a', newline='') as f:
+                        writer = csv.writer(f)
+                        writer.writerow([timestamp, f"{x_cm:.2f}", f"{y_cm:.2f}", f"{angle_deg:.2f}"])
 
     # Tkinter Bild anzeigen
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
