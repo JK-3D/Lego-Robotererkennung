@@ -77,6 +77,48 @@ def update_frame():
 
     frame = frame[0:FRAME_HEIGHT_PX, 0:FRAME_WIDTH_PX]
 
+    # Bils skalieren ohne zuzuschneiden
+    scale_percent = 125
+    width = int(frame.shape[1] * scale_percent / 100)
+    height = int(frame.shape[0] * scale_percent / 100)
+    dim = (width, height)
+    frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+
+    # Bild zuschneiden
+    #frame = frame[50:height-500, 50:width-500]
+
+    # Bild drehen
+    #frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+
+    # Bild kippen
+    # # Breite und Höhe des Videos
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    # Transformation definieren
+    # Quellpunkte (ganze Fläche)
+    src_pts = np.float32([
+        [0, 0],
+        [width - 1, 0],
+        [0, height - 1],
+        [width - 1, height - 1]
+    ])
+
+    # Zielpunkte (oben näher zusammen, unten weiter auseinander)
+    margin = 100  # wie stark gestaucht wird
+    dst_pts = np.float32([
+        [margin, 0],              # oben links näher zur Mitte
+        [width - margin, 0],      # oben rechts näher zur Mitte
+        [0, height - 1],          # unten links bleibt gleich
+        [width - 1, height - 1]   # unten rechts bleibt gleich
+    ])
+
+    # Perspektivmatrix berechnen
+    M = cv2.getPerspectiveTransform(src_pts, dst_pts)
+
+    # Transformation anwenden
+    #frame = cv2.warpPerspective(frame, M, (width, height))
+
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     kp_frame, des_frame = sift.detectAndCompute(gray, None)
 
