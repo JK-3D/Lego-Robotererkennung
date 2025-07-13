@@ -22,7 +22,7 @@ window = tk.Tk()
 window.title("SIFT-Erkennung Live + Foto")
 
 # Kamera starten
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 # Vorschau-Label
 label = tk.Label(window)
