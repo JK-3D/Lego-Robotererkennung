@@ -1,4 +1,4 @@
-import math
+from math import pi
 import datetime
 
 # Direkte Eingabe deiner CSV-Daten
@@ -103,7 +103,7 @@ for i in range(len(data)-1):
     print(data[i])
     if data[i-1][1]-data[i][1] + data[i-1][2]-data[i][2] >= 0.3 and data[i-1][3]-data[i][3] >= 5:
         print("Kurve")
-        fahrten.append(["Kurve", (180*(((data[i-1][1]-data[i][1])**2 + (data[i-1][2]-data[i][2])**2)**0.5))/(math.pi*(data[i][2]-data[i-1][2])), data[i][2]-data[i-1][2]])
+        fahrten.append(["Kurve", (180*(((data[i-1][1]-data[i][1])**2 + (data[i-1][2]-data[i][2])**2)**0.5))/(pi*(data[i][2]-data[i-1][2])), data[i][2]-data[i-1][2]])
     
     elif data[i-1][1]-data[i][1] + data[i-1][2]-data[i][2] >= 0.3:
         print("Geradeausfahrt")
@@ -120,8 +120,20 @@ for i in range(len(data)-1):
 
 print(fahrten)
 
+commands = []
+
+for i in range(len(fahrten)):
+    if fahrten[i][0] == "Geradeausfahrt":
+        commands.append(f"drive_base.straight({round(fahrten[i][1], 2)})")
+    
+    elif fahrten[i][0] == "Drehen":
+        commands.append(f"drive_base.turn({round(fahrten[i][1], 2)})")
+
+    elif fahrten[i][0] == "Kurve":
+        commands.append(f"drive_base.curve({round(fahrten[i][1], 2)}, {round(fahrten[i][2], 2)})")
+
 # Pybricks-Code generieren
-""" with open(datetime.datetime.now().strftime("PybricksCode\Pybricks_%Y-%m-%d_%H-%M-%S.py"), "w") as f:
+with open(datetime.datetime.now().strftime("PybricksCode\Pybricks_%Y-%m-%d_%H-%M-%S.py"), "w") as f:
     f.write('''from pybricks.hubs import PrimeHub
 from pybricks.pupdevices import Motor
 from pybricks.robotics import DriveBase
@@ -143,5 +155,3 @@ drive_base = DriveBase(left_motor, right_motor, wheel_diameter, axle_track)
         f.write(cmd + "\n")
 
 print("✅ Pybricks-Code erfolgreich in 'lego_fahrt.py' gespeichert.")
-
-"""
